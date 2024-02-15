@@ -6,6 +6,8 @@ const mywsServer = new WebSocket(url);
 const myMessages = document.getElementById("messages");
 const myInput = document.getElementById("message");
 const sendBtn = document.getElementById("send");
+console.log(sendBtn);
+let playersInLobby = [];
 
 sendBtn.disabled = true;
 sendBtn.addEventListener("click", sendMsg, false);
@@ -24,6 +26,31 @@ function msgGeneration(msg, from) {
   myMessages.appendChild(newMessage);
 }
 
+function addPlayerToLobby(id) {
+  if (!playersInLobby.includes("Player " + id)) {
+    playersInLobby.push("Player " + id);
+  }
+  updateLobby();
+}
+
+function removePlayerFromLobby(id) {
+  playersInLobby = playersInLobby.filter((player) => {
+    return player != "Player " + id;
+  });
+  updateLobby();
+}
+
+function updateLobby() {
+  const lobby = document.getElementById("lobby");
+  const players = [];
+  playersInLobby.forEach((playerInLobby) => {
+    const player = document.createElement("h3");
+    player.innerText = playerInLobby;
+    players.push(player);
+  });
+  lobby.replaceChildren(...players);
+}
+
 //enabling send message when connection is open
 mywsServer.onopen = function () {
   sendBtn.disabled = false;
@@ -32,5 +59,13 @@ mywsServer.onopen = function () {
 //handling message event
 mywsServer.onmessage = function (event) {
   const { data } = event;
-  msgGeneration(data, "Server");
+  if (data.startsWith("joined")) {
+    const id = data.split(" ")[1];
+    addPlayerToLobby(id);
+  } else if (data.startsWith("left")) {
+    const id = data.split(" ")[1];
+    removePlayerFromLobby(id);
+  } else {
+    msgGeneration(data, "Server");
+  }
 };

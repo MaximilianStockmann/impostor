@@ -24,11 +24,31 @@ wsServer.on("connection", (ws) => {
   console.log("established websocket connection");
   const playerId = assignPlayerId(ws);
   updatePlayerConnections(playerId, ws);
+
+  wsServer.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      Object.keys(playerConnections).forEach((id) => {
+        client.send("joined " + id);
+      });
+    }
+  });
+
   ws.on("message", (msg) => {
     console.log("Received message: ", msg.toString());
     wsServer.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN && client === ws) {
         client.send(`To player ${playerId}: ${msg.toString()}`);
+      }
+    });
+  });
+
+  ws.on("close", () => {
+    const id = Object.keys(playerConnections).find(
+      (key) => playerConnections[key] === ws
+    );
+    wsServer.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send("left " + id);
       }
     });
   });
