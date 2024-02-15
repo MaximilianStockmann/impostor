@@ -9,6 +9,9 @@ app.use("/", express.static(path.resolve(__dirname, "../client")));
 
 const expressServer = app.listen(3000);
 
+const playerConnections = {};
+let currentPlayerId = 0;
+
 console.log("Started HTTP Server on Port 3000");
 
 const wsServer = new WebSocket.Server({
@@ -19,11 +22,13 @@ const wsServer = new WebSocket.Server({
 
 wsServer.on("connection", (ws) => {
   console.log("established websocket connection");
+  const playerId = assignPlayerId(ws);
+  updatePlayerConnections(playerId, ws);
   ws.on("message", (msg) => {
     console.log("Received message: ", msg.toString());
     wsServer.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg.toString());
+      if (client.readyState === WebSocket.OPEN && client === ws) {
+        client.send(`To player ${playerId}: ${msg.toString()}`);
       }
     });
   });
@@ -37,3 +42,15 @@ expressServer.on("upgrade", async (request, socket, head) => {
     wsServer.emit("connection", ws, request);
   });
 });
+
+function assignPlayerId(ws) {
+  console.log(wsServer.clients);
+  const playerId = currentPlayerId;
+  currentPlayerId += 1;
+  ws.emit(playerId);
+  return playerId;
+}
+
+function updatePlayerConnections(id, ws) {
+  playerConnections[id] = ws;
+}
