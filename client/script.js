@@ -12,6 +12,8 @@ let playersInLobby = [];
 sendBtn.disabled = true;
 sendBtn.addEventListener("click", sendMsg, false);
 
+// TODO make page request current lobby status on reload
+
 //Sending message from client
 function sendMsg() {
   const text = myInput.value;

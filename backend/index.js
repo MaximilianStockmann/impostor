@@ -21,8 +21,8 @@ const wsServer = new WebSocket.Server({
 // wsServer.clients holds the client connections
 
 wsServer.on("connection", (ws) => {
-  console.log("established websocket connection");
   const playerId = assignPlayerId(ws);
+  console.log("established websocket connection to player " + playerId);
   updatePlayerConnections(playerId, ws);
 
   wsServer.clients.forEach((client) => {
@@ -46,6 +46,8 @@ wsServer.on("connection", (ws) => {
     const id = Object.keys(playerConnections).find(
       (key) => playerConnections[key] === ws
     );
+    console.log("Connection to Player " + id + " closing");
+    delete playerConnections[id];
     wsServer.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send("left " + id);
@@ -64,7 +66,6 @@ expressServer.on("upgrade", async (request, socket, head) => {
 });
 
 function assignPlayerId(ws) {
-  console.log(wsServer.clients);
   const playerId = currentPlayerId;
   currentPlayerId += 1;
   ws.emit(playerId);
