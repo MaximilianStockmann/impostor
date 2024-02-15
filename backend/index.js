@@ -37,7 +37,7 @@ wsServer.on("connection", (ws) => {
     console.log("Received message: ", msg.toString());
     wsServer.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN && client === ws) {
-        client.send(`To player ${playerId}: ${msg.toString()}`);
+        client.send(`play ${msg}`);
       }
     });
   });

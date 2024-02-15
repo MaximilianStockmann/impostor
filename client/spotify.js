@@ -4,10 +4,12 @@ const code = params.get("code");
 let chosenDevice;
 const playBtn = document.getElementById("play");
 
+export let accessToken;
+
 if (!code) {
   redirectToAuthCodeFlow(clientId);
 } else {
-  const accessToken = await getAccessToken(clientId, code);
+  accessToken = await getAccessToken(clientId, code);
   const profile = await fetchProfile(accessToken);
   console.log(profile); // Profile data logs to console
 
@@ -163,9 +165,9 @@ function renderDevices(devices) {
   });
 }
 
-export async function playSong(token) {
+export async function playSong(token, songId) {
   const requestBody = {
-    uris: ["spotify:track:1mPf6QFVWQmk0MiSbIy2Am"],
+    uris: [`spotify:track:${songId}`],
     position_ms: 0,
   };
 

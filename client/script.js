@@ -1,4 +1,4 @@
-import { playSong } from "./spotify";
+import { accessToken, playSong } from "./spotify.js";
 
 //Websocekt variables
 const url = "ws://localhost:3000/myWebsocket";
@@ -10,6 +10,7 @@ const myInput = document.getElementById("message");
 const sendBtn = document.getElementById("send");
 
 console.log(sendBtn);
+console.log(accessToken);
 let playersInLobby = [];
 
 sendBtn.disabled = true;
@@ -70,6 +71,9 @@ mywsServer.onmessage = function (event) {
   } else if (data.startsWith("left")) {
     const id = data.split(" ")[1];
     removePlayerFromLobby(id);
+  } else if (data.startsWith("play")) {
+    const songId = data.split(" ")[1];
+    playSong(accessToken, songId);
   } else {
     msgGeneration(data, "Server");
   }
