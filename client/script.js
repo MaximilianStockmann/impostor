@@ -1,3 +1,5 @@
+import { playSong } from "./spotify";
+
 //Websocekt variables
 const url = "ws://localhost:3000/myWebsocket";
 const mywsServer = new WebSocket(url);
@@ -6,6 +8,7 @@ const mywsServer = new WebSocket(url);
 const myMessages = document.getElementById("messages");
 const myInput = document.getElementById("message");
 const sendBtn = document.getElementById("send");
+
 console.log(sendBtn);
 let playersInLobby = [];
 
