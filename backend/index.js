@@ -9,7 +9,7 @@ app.use("/", express.static(path.resolve(__dirname, "../client")));
 
 const expressServer = app.listen(3000);
 
-const playerConnections = {};
+let playerConnections = [];
 let currentPlayerId = 0;
 
 console.log("Started HTTP Server on Port 3000");
@@ -22,7 +22,6 @@ const wsServer = new WebSocket.Server({
 
 wsServer.on("connection", (ws) => {
   const playerId = assignPlayerId(ws);
-  console.log("established websocket connection to player " + playerId);
   updatePlayerConnections(playerId, ws);
 
   ws.on("message", (msg) => {
@@ -31,16 +30,13 @@ wsServer.on("connection", (ws) => {
 
   ws.on("close", () => {
     const id = getWsId(ws);
-    console.log(
-      "Connection to Player " + playerConnections[id].name + " closing"
-    );
 
     wsServer.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send("left " + playerConnections[id].name);
+        client.send("left " + getConncectionById(id).name);
       }
     });
-    delete playerConnections[id];
+    playerConnections = playerConnections.filter((conn) => conn.id !== id);
   });
 });
 
@@ -53,6 +49,7 @@ expressServer.on("upgrade", async (request, socket, head) => {
   });
 });
 
+// TODO replace with uuids at some point
 function assignPlayerId(ws) {
   const playerId = currentPlayerId;
   currentPlayerId += 1;
@@ -60,15 +57,12 @@ function assignPlayerId(ws) {
 }
 
 function updatePlayerConnections(id, ws) {
-  playerConnections.id = id;
-  playerConnections.ws = ws;
-  playerConnections.name = undefined;
+  playerConnections.push(new PlayerConnection(id, ws));
 }
 
 function playSongForAll(songId) {
-  Object.keys(playerConnections).forEach((key) => {
-    const ws = playerConnections[key];
-    playSong(ws, songId);
+  playerConnections.forEach((conn) => {
+    playSong(conn.ws, songId);
   });
 }
 
@@ -79,23 +73,21 @@ function playSong(ws, songId) {
 }
 
 function getWsId(ws) {
-  return Object.keys(playerConnections).find(
-    (key) => playerConnections[key] === ws
-  );
+  const wsId = playerConnections.find((conn) => conn.ws === ws).id;
+  return wsId;
 }
 
+// TODO rn only names without spaces are possible, fix
 function messageHandler(ws, msg) {
-  console.log("Received message: ", msg.toString());
-
   if (msg.startsWith("name")) {
     msg = msg.split(" ")[1];
     const id = getWsId(ws);
-    playerConnections[id].name = msg;
+    const conn = getConncectionById(id);
+    conn.name = msg;
 
     wsServer.clients.forEach((client) => {
-      console.log(`Name: ${playerConnections[id].name}`);
       if (client.readyState === WebSocket.OPEN) {
-        client.send("joined " + playerConnections[id].name);
+        client.send("joined " + conn.name);
       }
     });
   } else if (msg.startsWith("play")) {
@@ -103,5 +95,24 @@ function messageHandler(ws, msg) {
     wsServer.clients.forEach((client) => {
       playSong(client, msg);
     });
+  } else if (msg.startsWith("get lobby")) {
+    let playerString = "";
+    playerConnections.forEach((conn) => {
+      playerString += conn.name;
+      playerString += " ";
+    });
+    ws.send("lobby " + playerString);
+  }
+}
+
+function getConncectionById(id) {
+  return playerConnections.find((connection) => connection.id === id);
+}
+
+class PlayerConnection {
+  constructor(id, ws) {
+    this.id = id;
+    this.ws = ws;
+    this.name = "";
   }
 }

@@ -36,20 +36,6 @@ function msgGeneration(msg, from) {
   myMessages.appendChild(newMessage);
 }
 
-function addPlayerToLobby(name) {
-  if (!playersInLobby.includes("Player " + name)) {
-    playersInLobby.push("Player " + name);
-  }
-  updateLobby();
-}
-
-function removePlayerFromLobby(name) {
-  playersInLobby = playersInLobby.filter((player) => {
-    return player != "Player " + name;
-  });
-  updateLobby();
-}
-
 function updateLobby() {
   const lobby = document.getElementById("lobby");
   const players = [];
@@ -68,20 +54,25 @@ function connectWs() {
   mywsServer.onopen = () => {
     mywsServer.send("name " + name);
     sendBtnCheck();
+    mywsServer.send("get lobby");
   };
 
   //handling message event
   mywsServer.onmessage = function (event) {
     const { data } = event;
     if (data.startsWith("joined")) {
-      const name = data.split(" ")[1];
-      addPlayerToLobby(name);
+      checkLobby(mywsServer);
     } else if (data.startsWith("left")) {
-      const id = data.split(" ")[1];
-      removePlayerFromLobby(id);
+      checkLobby(mywsServer);
     } else if (data.startsWith("play")) {
       const songId = data.split(" ")[1];
       playSong(accessToken, songId);
+    } else if (data.startsWith("lobby")) {
+      const players = data.split(" ");
+      players.shift();
+      console.log(players);
+      playersInLobby = players;
+      updateLobby();
     } else {
       msgGeneration(data, "Server");
     }
@@ -103,4 +94,8 @@ export function sendBtnCheck() {
   else {
     sendBtn.disabled = true;
   }
+}
+
+function checkLobby(ws) {
+  ws.send("get lobby");
 }
