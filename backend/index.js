@@ -8,7 +8,7 @@ const app = express();
 
 app.use("/", express.static(path.resolve(__dirname, "../client")));
 
-const expressServer = app.listen(3000);
+const expressServer = app.listen(30002);
 
 let playerConnections = [];
 let currentPlayerId = 0;
