@@ -1,5 +1,6 @@
 const WebSocket = require("ws");
 const express = require("express");
+const fs = require("fs");
 
 const path = require("path");
 
@@ -13,6 +14,8 @@ let playerConnections = [];
 let currentPlayerId = 0;
 
 console.log("Started HTTP Server on Port 3000");
+
+const songIds = getSongsFromPlaylist();
 
 const wsServer = new WebSocket.Server({
   noServer: true,
@@ -145,9 +148,14 @@ function startGame() {
     playerConnections[Math.floor(Math.random() * playerConnections.length)];
   console.log("Impostor was chosen: " + impostor.name);
 
+  const randomSong = songIds[Math.floor(Math.random() * songIds.length)];
+  const randomImpostorSong = songIds.filter((song) => song !== randomSong)[
+    Math.floor(Math.random() * songIds.length)
+  ];
+
   playerConnections.forEach((conn) => {
-    const normalSong = "4kbj5MwxO1bq9wjT5g9HaA";
-    const impostorSong = "14WB9RMGcLvEKWNgPP22fV";
+    const normalSong = randomSong;
+    const impostorSong = randomImpostorSong;
 
     if (conn.name !== impostor.name) {
       playSong(conn.ws, normalSong);
@@ -157,4 +165,18 @@ function startGame() {
       console.log(`Song with Id ${impostorSong} is playing for ${conn.name}`);
     }
   });
+}
+
+function getSongsFromPlaylist() {
+  const data = fs.readFileSync("../playlist.json");
+  const playListData = JSON.parse(data);
+
+  const songIds = [];
+  playListData.tracks.items.forEach((track) => {
+    songIds.push(track.track.id);
+  });
+
+  console.log(songIds);
+
+  return songIds;
 }

@@ -92,6 +92,7 @@ export async function getAccessToken(clientId, code) {
   });
 
   const { access_token } = await result.json();
+  console.log(access_token);
   return access_token;
 }
 
@@ -187,3 +188,21 @@ export async function playSong(token, songId) {
     }
   );
 }
+
+async function getPlaylist(token, id) {
+  const result = await fetch(`https://api.spotify.com/v1/playlists/${id}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  try {
+    let data = result.json();
+    return data;
+  } catch (e) {
+    return {};
+  }
+}
+
+("37i9dQZF1Fa1IIVtEpGUcU");
