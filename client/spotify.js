@@ -1,8 +1,11 @@
+import { sendBtnCheck } from "./script.js";
+
 const clientId = "fbf7ad7aa9d74a60ac9880683927258d"; // Replace with your client ID
 const params = new URLSearchParams(window.location.search);
 const code = params.get("code");
-let chosenDevice;
+export let chosenDevice;
 const playBtn = document.getElementById("play");
+const sendBtn = document.getElementById("send");
 
 export let accessToken;
 
@@ -159,6 +162,7 @@ function renderDevices(devices) {
     entry.addEventListener("click", (ev) => {
       chosenDevice = device;
       console.log(chosenDevice);
+      sendBtnCheck();
     });
     entry.innerText = device.name;
     deviceList.appendChild(entry);
