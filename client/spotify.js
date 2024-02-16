@@ -1,4 +1,4 @@
-import { sendBtnCheck } from "./script.js";
+import { sendBtnCheck, ws } from "./script.js";
 
 const clientId = "fbf7ad7aa9d74a60ac9880683927258d"; // Replace with your client ID
 const params = new URLSearchParams(window.location.search);
@@ -17,7 +17,8 @@ if (!code) {
   console.log(profile); // Profile data logs to console
 
   playBtn.addEventListener("click", (event) => {
-    playSong(accessToken);
+    // playSong(accessToken);
+    ws.send("ready");
   });
 
   try {

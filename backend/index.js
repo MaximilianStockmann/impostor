@@ -79,10 +79,11 @@ function getWsId(ws) {
 
 // TODO rn only names without spaces are possible, fix
 function messageHandler(ws, msg) {
+  const id = getWsId(ws);
+  const conn = getConncectionById(id);
   if (msg.startsWith("name")) {
     msg = msg.split(" ")[1];
-    const id = getWsId(ws);
-    const conn = getConncectionById(id);
+
     conn.name = msg;
 
     wsServer.clients.forEach((client) => {
@@ -102,6 +103,15 @@ function messageHandler(ws, msg) {
       playerString += " ";
     });
     ws.send("lobby " + playerString);
+  } else if (msg.startsWith("ready")) {
+    conn.isReady = true;
+    wsServer.clients.forEach((client) => {
+      console.log("Sent ready " + conn.name + " to everyone");
+      client.send("ready " + conn.name);
+    });
+    if (checkLobbyStatus()) {
+      startGame();
+    }
   }
 }
 
@@ -109,10 +119,42 @@ function getConncectionById(id) {
   return playerConnections.find((connection) => connection.id === id);
 }
 
+function sendToEach(msg) {
+  playerConnections.forEach((conn) => {
+    if (client.readyState === WebSocket.OPEN) {
+      conn.ws.send(msg);
+    }
+  });
+}
+
 class PlayerConnection {
   constructor(id, ws) {
     this.id = id;
     this.ws = ws;
     this.name = "";
+    this.isReady = false;
   }
+}
+
+function checkLobbyStatus() {
+  return playerConnections.every((conn) => conn.isReady);
+}
+
+function startGame() {
+  const impostor =
+    playerConnections[Math.floor(Math.random() * playerConnections.length)];
+  console.log("Impostor was chosen: " + impostor.name);
+
+  playerConnections.forEach((conn) => {
+    const normalSong = "4kbj5MwxO1bq9wjT5g9HaA";
+    const impostorSong = "14WB9RMGcLvEKWNgPP22fV";
+
+    if (conn.name !== impostor.name) {
+      playSong(conn.ws, normalSong);
+      console.log(`Song with Id ${normalSong} is playing for ${conn.name}`);
+    } else {
+      playSong(conn.ws, impostorSong);
+      console.log(`Song with Id ${impostorSong} is playing for ${conn.name}`);
+    }
+  });
 }

@@ -16,6 +16,8 @@ let name;
 
 let playersInLobby = [];
 
+export let ws;
+
 sendBtn.disabled = true;
 sendBtn.addEventListener("click", sendMsg, false);
 joinBtn.addEventListener("click", joinLobby);
@@ -40,8 +42,22 @@ function updateLobby() {
   const lobby = document.getElementById("lobby");
   const players = [];
   playersInLobby.forEach((playerInLobby) => {
-    const player = document.createElement("h3");
-    player.innerText = playerInLobby;
+    const player = document.createElement("div");
+    const name = document.createElement("h3");
+    const status = document.createElement("h4");
+
+    status.innerText = "Not ready";
+    addEventListener("ready", (e) => {
+      console.log(`e.detail: ${e.detail}, playerInLobby: ${playerInLobby}`);
+      if (e.detail === playerInLobby) {
+        status.innerText = "Ready";
+      }
+    });
+
+    name.innerText = playerInLobby;
+
+    player.appendChild(name);
+    player.appendChild(status);
     players.push(player);
   });
   lobby.replaceChildren(...players);
@@ -70,21 +86,27 @@ function connectWs() {
     } else if (data.startsWith("lobby")) {
       const players = data.split(" ");
       players.shift();
+      players.pop();
       console.log(players);
       playersInLobby = players;
       updateLobby();
+    } else if (data.startsWith("ready")) {
+      const readyPlayer = data.split(" ")[1];
+      console.log("In Ready branch");
+      doReadyPlayer(readyPlayer);
     } else {
       msgGeneration(data, "Server");
     }
   };
 
   isWsOpen = true;
+  return mywsServer;
 }
 
 function joinLobby() {
   console.log("Just checking");
   name = document.getElementById("choose-name").value;
-  connectWs();
+  ws = connectWs();
   sendBtnCheck();
 }
 
@@ -98,4 +120,11 @@ export function sendBtnCheck() {
 
 function checkLobby(ws) {
   ws.send("get lobby");
+}
+
+// TODO rn when a new player joins they don't see the ready status of the others correctly, because there is no check for this
+function doReadyPlayer(readyPlayer) {
+  console.log(readyPlayer);
+  const readyEvent = new CustomEvent("ready", { detail: readyPlayer });
+  dispatchEvent(readyEvent);
 }
